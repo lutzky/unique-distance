@@ -14,9 +14,19 @@ var (
 	quitAfter = flag.Int64("quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
 )
 
+type findUniqueConfig struct {
+	boardSize int
+	printAll  bool
+	quitAfter int64
+}
+
 func main() {
 	flag.Parse()
-	found := findUnique(os.Stdout, *boardSize)
+	found := findUnique(os.Stdout, findUniqueConfig{
+		boardSize: *boardSize,
+		printAll:  *printAll,
+		quitAfter: *quitAfter,
+	})
 	fmt.Printf("Found %d solutions\n", found)
 }
 
@@ -68,18 +78,18 @@ func numBoards(n int) int64 {
 	return result
 }
 
-func findUnique(w io.Writer, n int) int64 {
+func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
-	for i := int64(0); i < numBoards(n); i++ {
-		board := boardN(n, i)
+	for i := int64(0); i < numBoards(config.boardSize); i++ {
+		board := boardN(config.boardSize, i)
 		ds := sqDistances(board)
 		if allUnique(ds) {
-			if *printAll {
+			if config.printAll {
 				printBoard(w, board, ds)
 				fmt.Fprintln(w)
 			}
 			found++
-			if *quitAfter != 0 && found >= *quitAfter {
+			if config.quitAfter != 0 && found >= config.quitAfter {
 				return found
 			}
 		}
