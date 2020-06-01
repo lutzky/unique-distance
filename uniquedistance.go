@@ -148,7 +148,7 @@ func (c coord) sqDist(o coord) int {
 }
 
 func sqDistances(board []coord) []int {
-	var result []int
+	result := make([]int, 0, len(board)*(1+len(board))/2)
 	for i := 0; i < len(board)-1; i++ {
 		for j := i + 1; j < len(board); j++ {
 			result = append(result, board[i].sqDist(board[j]))
@@ -171,14 +171,14 @@ func allUnique(ns []int) bool {
 }
 
 func boardN(size int, input int64) []coord {
-	var result []coord
+	result := make([]coord, size)
 	for i := 0; i < size; i++ {
 		var c coord
 		c.X = int(input % int64(size))
 		input /= int64(size)
 		c.Y = int(input % int64(size))
 		input /= int64(size)
-		result = append(result, c)
+		result[i] = c
 	}
 	return result
 }
