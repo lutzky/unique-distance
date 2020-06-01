@@ -104,17 +104,22 @@ func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	return found
 }
 
+const Workers = 4
+
 func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
+	boardsPerWorker := numBoards(config.boardSize) / Workers
 	ch := make(chan []coord)
-	for i := int64(0); i < numBoards(config.boardSize); i++ {
+	for i := int64(0); i < Workers; i++ {
 		go func(i int64) {
-			board := boardN(config.boardSize, i)
-			ds := sqDistances(board)
-			if allUnique(ds) {
-				ch <- board
-			} else {
-				ch <- nil
+			for q := int64(0); q < boardsPerWorker; q++ {
+				board := boardN(config.boardSize, boardsPerWorker*i+q)
+				ds := sqDistances(board)
+				if allUnique(ds) {
+					ch <- board
+				} else {
+					ch <- nil
+				}
 			}
 		}(i)
 	}
