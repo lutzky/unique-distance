@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"sort"
 	"testing"
 
@@ -104,11 +105,23 @@ func TestNumBoards(t *testing.T) {
 }
 
 func BenchmarkFindUnique(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		findUnique(nil, findUniqueConfig{
-			boardSize: 4,
-			printAll:  false,
-			quitAfter: 0,
+	benches := []struct {
+		f    func(io.Writer, findUniqueConfig) int64
+		name string
+	}{
+		{findUnique, "findUnique"},
+		{findUniqueParallel, "findUniqueParallel"},
+	}
+
+	for _, bm := range benches {
+		b.Run(bm.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				bm.f(nil, findUniqueConfig{
+					boardSize: 4,
+					printAll:  false,
+					quitAfter: 0,
+				})
+			}
 		})
 	}
 }

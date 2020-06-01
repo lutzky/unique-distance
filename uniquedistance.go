@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	boardSize = flag.Int("n", 3, "Board size")
-	printAll  = flag.Bool("print_all", true, "Print all valid boards seen")
-	quitAfter = flag.Int64("quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
+	boardSize   = flag.Int("n", 3, "Board size")
+	printAll    = flag.Bool("print_all", true, "Print all valid boards seen")
+	quitAfter   = flag.Int64("quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
+	useParallel = flag.Bool("use_parallel", false, "Use parallel implementation")
 )
 
 type findUniqueConfig struct {
@@ -22,11 +23,17 @@ type findUniqueConfig struct {
 
 func main() {
 	flag.Parse()
-	found := findUnique(os.Stdout, findUniqueConfig{
+	config := findUniqueConfig{
 		boardSize: *boardSize,
 		printAll:  *printAll,
 		quitAfter: *quitAfter,
-	})
+	}
+	var found int64
+	if *useParallel {
+		found = findUniqueParallel(os.Stdout, config)
+	} else {
+		found = findUnique(os.Stdout, config)
+	}
 	fmt.Printf("Found %d solutions\n", found)
 }
 
@@ -85,6 +92,38 @@ func findUnique(w io.Writer, config findUniqueConfig) int64 {
 		ds := sqDistances(board)
 		if allUnique(ds) {
 			if config.printAll {
+				printBoard(w, board, ds)
+				fmt.Fprintln(w)
+			}
+			found++
+			if config.quitAfter != 0 && found >= config.quitAfter {
+				return found
+			}
+		}
+	}
+	return found
+}
+
+func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
+	var found int64
+	ch := make(chan []coord)
+	for i := int64(0); i < numBoards(config.boardSize); i++ {
+		go func(i int64) {
+			board := boardN(config.boardSize, i)
+			ds := sqDistances(board)
+			if allUnique(ds) {
+				ch <- board
+			} else {
+				ch <- nil
+			}
+		}(i)
+	}
+
+	for i := int64(0); i < numBoards(config.boardSize); i++ {
+		board := <-ch
+		if board != nil {
+			if config.printAll {
+				ds := sqDistances(board)
 				printBoard(w, board, ds)
 				fmt.Fprintln(w)
 			}
