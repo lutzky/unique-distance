@@ -2,9 +2,11 @@ package main
 
 import (
 	"io"
+	"os"
 	"sort"
 	"strings"
 	"testing"
+	"testing/quick"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -128,6 +130,31 @@ func TestFindUnique(t *testing.T) {
 				t.Errorf("got: %d; want %d", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestUnusualDistance(t *testing.T) {
+	getBoard := func(nn uint64) []coord {
+		n := int64(nn % 9000)
+		return boardN(4, n)
+	}
+	f := func(nn uint64) bool {
+		board := getBoard(nn)
+		ds := sqDistances(board)
+		for _, x := range ds {
+			if x > 18 {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		eiei := err.(*quick.CheckError)
+		n := eiei.In[0].(uint64)
+		board := getBoard(n)
+		ds := sqDistances(board)
+		printBoard(os.Stdout, board, ds)
+		t.Error(err)
 	}
 }
 
