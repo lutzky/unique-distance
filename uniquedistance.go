@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	workers     = flag.Int64("workers", 4, "Number of workers for parallel version")
 	boardSize   = flag.Int("n", 3, "Board size")
 	printAll    = flag.Bool("print_all", true, "Print all valid boards seen")
 	quitAfter   = flag.Int64("quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
@@ -57,13 +58,11 @@ func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	return found
 }
 
-const Workers = 4
-
 func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
-	boardsPerWorker := board.Amount(config.boardSize) / Workers
+	boardsPerWorker := board.Amount(config.boardSize) / *workers
 	ch := make(chan int64)
-	for i := int64(0); i < Workers; i++ {
+	for i := int64(0); i < *workers; i++ {
 		go func(i int64) {
 			for q := int64(0); q < boardsPerWorker; q++ {
 				b := board.Generate(config.boardSize, boardsPerWorker*i+q)
