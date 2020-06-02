@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 )
 
 var (
@@ -85,12 +84,16 @@ func numBoards(n int) int64 {
 	return result
 }
 
+func maxDistance(boardSize int) int {
+	return 2 * (boardSize - 1) * (boardSize - 1)
+}
+
 func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
 	for i := int64(0); i < numBoards(config.boardSize); i++ {
 		board := boardN(config.boardSize, i)
 		ds := sqDistances(board)
-		if allUnique(ds) {
+		if allUnique(ds, maxDistance(config.boardSize)) {
 			if config.printAll {
 				printBoard(w, board, ds)
 				fmt.Fprintln(w)
@@ -115,7 +118,7 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 			for q := int64(0); q < boardsPerWorker; q++ {
 				board := boardN(config.boardSize, boardsPerWorker*i+q)
 				ds := sqDistances(board)
-				if allUnique(ds) {
+				if allUnique(ds, maxDistance(config.boardSize)) {
 					ch <- board
 				} else {
 					ch <- nil
@@ -157,15 +160,16 @@ func sqDistances(board []coord) []int {
 	return result
 }
 
-func allUnique(ns []int) bool {
+func allUnique(ns []int, max int) bool {
 	if len(ns) < 2 {
 		return true
 	}
-	sort.Ints(ns)
-	for i := 0; i < len(ns)-1; i++ {
-		if ns[i] == ns[i+1] {
+	found := make([]bool, max+1)
+	for _, d := range ns {
+		if found[d] {
 			return false
 		}
+		found[d] = true
 	}
 	return true
 }

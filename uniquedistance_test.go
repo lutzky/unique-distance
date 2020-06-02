@@ -55,7 +55,7 @@ func TestAllUnique(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		got := allUnique(tc.input)
+		got := allUnique(tc.input, 16)
 		if got != tc.want {
 			t.Errorf("allUnique(%v) = %t; want %t", tc.input, got, tc.want)
 		}
