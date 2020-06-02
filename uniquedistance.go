@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/lutzky/unique-distance/board"
 )
 
 var (
@@ -36,66 +38,14 @@ func main() {
 	fmt.Printf("Found %d solutions\n", found)
 }
 
-type coord struct {
-	X, Y int
-}
-
-func printBoard(w io.Writer, board []coord, ds []int) {
-	if w == nil {
-		return
-	}
-	n := len(board)
-	rows := make([][]int, n)
-
-	for i := 0; i < n; i++ {
-		rows[i] = make([]int, n)
-		for _, c := range board {
-			if c.Y == i {
-				rows[i][c.X] = 1
-			}
-		}
-	}
-
-	for i, row := range rows {
-		fmt.Fprintf(w, "[")
-		for _, col := range row {
-			if col == 0 {
-				fmt.Fprintf(w, ".")
-			} else {
-				fmt.Fprintf(w, "o")
-			}
-		}
-		fmt.Fprintf(w, "]")
-		if i == 0 {
-			fmt.Fprintf(w, " %v", ds)
-		}
-		fmt.Fprintln(w)
-	}
-}
-
-func numBoards(n int) int64 {
-	/* n ^ 2n */
-	result := int64(1)
-
-	for i := 0; i < 2*n; i++ {
-		result *= int64(n)
-	}
-
-	return result
-}
-
-func maxDistance(boardSize int) int {
-	return 2 * (boardSize - 1) * (boardSize - 1)
-}
-
 func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
-	for i := int64(0); i < numBoards(config.boardSize); i++ {
-		board := boardN(config.boardSize, i)
-		ds := sqDistances(board)
-		if allUnique(ds, maxDistance(config.boardSize)) {
+	for i := int64(0); i < board.Amount(config.boardSize); i++ {
+		b := board.Generate(config.boardSize, i)
+		ds := b.SquareDistances()
+		if allUnique(ds, b.MaxDistance()) {
 			if config.printAll {
-				printBoard(w, board, ds)
+				b.Print(w)
 				fmt.Fprintln(w)
 			}
 			found++
@@ -111,15 +61,15 @@ const Workers = 4
 
 func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	var found int64
-	boardsPerWorker := numBoards(config.boardSize) / Workers
-	ch := make(chan []coord)
+	boardsPerWorker := board.Amount(config.boardSize) / Workers
+	ch := make(chan *board.Board)
 	for i := int64(0); i < Workers; i++ {
 		go func(i int64) {
 			for q := int64(0); q < boardsPerWorker; q++ {
-				board := boardN(config.boardSize, boardsPerWorker*i+q)
-				ds := sqDistances(board)
-				if allUnique(ds, maxDistance(config.boardSize)) {
-					ch <- board
+				b := board.Generate(config.boardSize, boardsPerWorker*i+q)
+				ds := b.SquareDistances()
+				if allUnique(ds, b.MaxDistance()) {
+					ch <- &b
 				} else {
 					ch <- nil
 				}
@@ -127,12 +77,11 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 		}(i)
 	}
 
-	for i := int64(0); i < numBoards(config.boardSize); i++ {
-		board := <-ch
-		if board != nil {
+	for i := int64(0); i < board.Amount(config.boardSize); i++ {
+		b := <-ch
+		if b != nil {
 			if config.printAll {
-				ds := sqDistances(board)
-				printBoard(w, board, ds)
+				b.Print(w)
 				fmt.Fprintln(w)
 			}
 			found++
@@ -142,22 +91,6 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 		}
 	}
 	return found
-}
-
-func (c coord) sqDist(o coord) int {
-	dx := o.X - c.X
-	dy := o.Y - c.Y
-	return dx*dx + dy*dy
-}
-
-func sqDistances(board []coord) []int {
-	result := make([]int, 0, len(board)*(1+len(board))/2)
-	for i := 0; i < len(board)-1; i++ {
-		for j := i + 1; j < len(board); j++ {
-			result = append(result, board[i].sqDist(board[j]))
-		}
-	}
-	return result
 }
 
 func allUnique(ns []int, max int) bool {
@@ -172,17 +105,4 @@ func allUnique(ns []int, max int) bool {
 		found[d] = true
 	}
 	return true
-}
-
-func boardN(size int, input int64) []coord {
-	result := make([]coord, size)
-	for i := 0; i < size; i++ {
-		var c coord
-		c.X = int(input % int64(size))
-		input /= int64(size)
-		c.Y = int(input % int64(size))
-		input /= int64(size)
-		result[i] = c
-	}
-	return result
 }
