@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -101,6 +102,32 @@ func TestNumBoards(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("numBoards(%d) = %d; want %d", tc.input, got, tc.want)
 		}
+	}
+}
+
+func TestFindUnique(t *testing.T) {
+	skipSlowTests := true
+
+	testCases := []struct {
+		name   string
+		config findUniqueConfig
+		want   int64
+	}{
+		{"3x3", findUniqueConfig{boardSize: 3}, 240},
+		{"4x4", findUniqueConfig{boardSize: 4}, 4416},
+		{"SLOW 5x5", findUniqueConfig{boardSize: 5}, 33600},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if skipSlowTests && strings.HasPrefix(tc.name, "SLOW") {
+				t.Skip("Skipping slow test")
+			}
+			got := findUnique(nil, tc.config)
+			if got != tc.want {
+				t.Errorf("got: %d; want %d", got, tc.want)
+			}
+		})
 	}
 }
 
