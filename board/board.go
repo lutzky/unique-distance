@@ -14,6 +14,7 @@ func main() {
 type Board struct {
 	Markers []Coord
 	Size    int
+	ID      int64
 }
 
 // Coord represents a possible coordinate of a marker on a board
@@ -81,6 +82,7 @@ func Generate(size int, id int64) Board {
 	return Board{
 		Markers: result,
 		Size:    size,
+		ID:      id,
 	}
 }
 
