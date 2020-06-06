@@ -3,12 +3,43 @@ package board
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"testing"
 	"testing/quick"
+	"unicode"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
+
+func fromString(size int, s string) Board {
+	result := Board{Size: size}
+	var i int64
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		n := int64(0)
+		if r == '.' {
+			r = '0'
+		}
+		if r == 'o' {
+			r = '1'
+		}
+		n, err := strconv.ParseInt(string(r), 16, 16)
+		if err != nil {
+			panic(fmt.Sprintf("Board has invalid marker '%c':\n%s", r, s))
+		}
+		x := i % int64(size)
+		y := i / int64(size)
+		for j := int64(0); j < n; j++ {
+			result.Markers = append(result.Markers, Coord{int(x), int(y)})
+		}
+		i++
+	}
+
+	return result
+}
 
 func TestSquareDistances(t *testing.T) {
 	testCases := []struct {
@@ -18,12 +49,20 @@ func TestSquareDistances(t *testing.T) {
 	}{
 		{
 			"3x3 diag",
-			Board{Size: 3, Markers: []Coord{{0, 0}, {1, 1}, {2, 2}}},
+			fromString(3, `
+			o..
+			.o.
+			..o
+			`),
 			[]int{2, 2, 8},
 		},
 		{
 			"[x  ][ xx][   ]",
-			Board{Size: 3, Markers: []Coord{{0, 0}, {1, 1}, {2, 1}}},
+			fromString(3, `
+			o..
+			.oo
+			...
+			`),
 			[]int{1, 2, 5},
 		},
 	}
@@ -55,12 +94,20 @@ func TestGenerate(t *testing.T) {
 		{
 			3,
 			0,
-			Board{Size: 3, Markers: []Coord{{0, 0}, {0, 0}, {0, 0}}},
+			fromString(3, `
+			3..
+			...
+			...
+			`),
 		},
 		{
 			3,
 			250,
-			Board{Size: 3, Markers: []Coord{{1, 2}, {0, 0}, {0, 1}}},
+			fromString(3, `
+			o..
+			o..
+			.o.
+			`),
 		},
 	}
 
