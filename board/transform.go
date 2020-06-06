@@ -10,6 +10,8 @@ func (b *Board) Mirror(columns bool) {
 			b.Markers[i].Y = b.Size - 1 - b.Markers[i].Y
 		}
 	}
+
+	b.updateID()
 }
 
 // Rotate rotates b 90 degrees in-place
@@ -19,4 +21,6 @@ func (b *Board) Rotate() {
 		b.Markers[i].Y = b.Markers[i].X
 		b.Markers[i].X = b.Size - 1 - y
 	}
+
+	b.updateID()
 }

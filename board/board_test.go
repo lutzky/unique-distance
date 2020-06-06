@@ -38,6 +38,7 @@ func fromString(size int, s string) Board {
 		i++
 	}
 
+	result.updateID()
 	return result
 }
 
@@ -79,10 +80,7 @@ func TestSquareDistances(t *testing.T) {
 }
 
 var boardCmpOpt = cmpopts.SortSlices(func(a, b Coord) bool {
-	if a.X != b.X {
-		return a.X < b.X
-	}
-	return a.Y < b.Y
+	return a.sortCompare(b)
 })
 
 func TestGenerate(t *testing.T) {
