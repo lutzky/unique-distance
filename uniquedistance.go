@@ -11,9 +11,6 @@ import (
 
 var (
 	workers     = flag.Int64("workers", 4, "Number of workers for parallel version")
-	boardSize   = flag.Int("n", 3, "Board size")
-	printAll    = flag.Bool("print_all", true, "Print all valid boards seen")
-	quitAfter   = flag.Int64("quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
 	useParallel = flag.Bool("use_parallel", false, "Use parallel implementation")
 )
 
@@ -23,13 +20,17 @@ type findUniqueConfig struct {
 	quitAfter int64
 }
 
+func registerFlags(fs *flag.FlagSet, config *findUniqueConfig) {
+	fs.IntVar(&config.boardSize, "n", 3, "Board size")
+	fs.BoolVar(&config.printAll, "print_all", true, "Print all valid boards seen")
+	fs.Int64Var(&config.quitAfter, "quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
+}
+
 func main() {
+	config := findUniqueConfig{}
+	registerFlags(flag.CommandLine, &config)
 	flag.Parse()
-	config := findUniqueConfig{
-		boardSize: *boardSize,
-		printAll:  *printAll,
-		quitAfter: *quitAfter,
-	}
+
 	var found int64
 	if *useParallel {
 		found = findUniqueParallel(os.Stdout, config)
