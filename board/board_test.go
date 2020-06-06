@@ -1,11 +1,13 @@
 package board
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 	"testing/quick"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestSquareDistances(t *testing.T) {
@@ -30,12 +32,19 @@ func TestSquareDistances(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got := tc.input.SquareDistances()
 			sort.Ints(got)
-			if d := cmp.Diff(got, tc.want); d != "" {
-				t.Errorf("Diff -got +want:\n%s", d)
+			if d := cmp.Diff(got, tc.want, boardCmpOpt); d != "" {
+				t.Errorf("Board:\n%s\nDiff -got +want:\n%s", tc.input, d)
 			}
 		})
 	}
 }
+
+var boardCmpOpt = cmpopts.SortSlices(func(a, b Coord) bool {
+	if a.X != b.X {
+		return a.X < b.X
+	}
+	return a.Y < b.Y
+})
 
 func TestGenerate(t *testing.T) {
 	testCases := []struct {
@@ -56,10 +65,13 @@ func TestGenerate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		got := Generate(tc.size, tc.input)
-		if d := cmp.Diff(got, tc.want); d != "" {
-			t.Errorf("Diff -got +want:\n%s", d)
-		}
+		t.Run(fmt.Sprintf("Gen%d", tc.input), func(t *testing.T) {
+			got := Generate(tc.size, tc.input)
+			if d := cmp.Diff(tc.want, got, boardCmpOpt); d != "" {
+				t.Errorf("Want:\n%v\nGot:\n%v", tc.want, got)
+				t.Errorf("Diff -want +got:\n%s", d)
+			}
+		})
 	}
 }
 
