@@ -155,10 +155,122 @@ func TestRotate(t *testing.T) {
 				tc.input.Rotate()
 
 				if d := cmp.Diff(want, tc.input, boardCmpOpt); d != "" {
-					t.Errorf("tc.input.Rotate() returned this board:\n%sBut wanted this one:\n%s\nDiff -want +got:\n%s",
+					t.Errorf("Got:\n%sWant:\n%s\nDiff -want +got:\n%s",
 						tc.input, want, d)
 				}
 			}
 		})
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	testCases := []struct {
+		name   string
+		inputs []Board
+		want   Board
+	}{
+		{
+			name: "tl-triang",
+			inputs: []Board{
+				fromString(3, `
+				oo.
+				o..
+				...
+				`),
+				fromString(3, `
+				.oo
+				..o
+				...
+				`),
+				fromString(3, `
+				...
+				..o
+				.oo
+				`),
+				fromString(3, `
+				...
+				o..
+				oo.
+				`),
+			},
+			want: fromString(3, `
+			oo.
+			o..
+			...
+			`),
+		},
+		{
+			name: "tetris-L",
+			inputs: []Board{
+				fromString(4, `
+				....
+				.o..
+				.o..
+				.oo.
+				`),
+				fromString(4, `
+				....
+				o...
+				ooo.
+				....
+				`),
+				fromString(4, `
+				.oo.
+				..o.
+				..o.
+				....
+				`),
+				fromString(4, `
+				....
+				.ooo
+				...o
+				....
+				`),
+				fromString(4, `
+				....
+				..o.
+				..o.
+				.oo.
+				`),
+				fromString(4, `
+				....
+				ooo.
+				o...
+				....
+				`),
+				fromString(4, `
+				.oo.
+				.o..
+				.o..
+				....
+				`),
+				fromString(4, `
+				....
+				...o
+				.ooo
+				....
+				`),
+			},
+			want: fromString(4, `
+			.oo.
+			.o..
+			.o..
+			....
+			`),
+		},
+	}
+
+	for _, tc := range testCases {
+		for _, input := range tc.inputs {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Logf("Normalizing board:\n%s", input)
+				input.Normalize()
+
+				if d := cmp.Diff(tc.want, input, boardCmpOpt); d != "" {
+					t.Errorf("Got:\n%sWant:\n%s\nDiff -want +got:\n%s",
+						input, tc.want, d)
+				}
+			})
+		}
 	}
 }

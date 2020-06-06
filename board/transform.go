@@ -3,6 +3,12 @@ package board
 // Mirror mirrors b in-place. If columns is true it mirrors by column,
 // otherwise it mirrors by row.
 func (b *Board) Mirror(columns bool) {
+	b.unsafeMirror(columns)
+
+	b.updateID()
+}
+
+func (b *Board) unsafeMirror(columns bool) {
 	for i := range b.Markers {
 		if columns {
 			b.Markers[i].X = b.Size - 1 - b.Markers[i].X
@@ -10,8 +16,6 @@ func (b *Board) Mirror(columns bool) {
 			b.Markers[i].Y = b.Size - 1 - b.Markers[i].Y
 		}
 	}
-
-	b.updateID()
 }
 
 // Rotate rotates b 90 degrees in-place
@@ -22,5 +26,26 @@ func (b *Board) Rotate() {
 		b.Markers[i].X = b.Size - 1 - y
 	}
 
+	b.updateID()
+}
+
+// Normalize brings b to a canonical orientation.
+//
+// If any two boards are equivalent
+func (b *Board) Normalize() {
+	minID := b.ID
+
+	for i := 0; i < 8; i++ {
+		if i == 4 {
+			b.unsafeMirror(false)
+		}
+		b.Rotate()
+
+		if b.ID < minID {
+			minID = b.ID
+		}
+	}
+
+	b.Markers = markersFromID(b.Size, minID)
 	b.updateID()
 }

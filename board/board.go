@@ -75,6 +75,17 @@ func (b *Board) Print(w io.Writer) {
 // Multiple IDs can generate the same board, which would have had different
 // marker orders, but markers are sorted at generation time.
 func Generate(size int, id int64) Board {
+	result := Board{
+		Markers: markersFromID(size, id),
+		Size:    size,
+	}
+
+	result.updateID()
+
+	return result
+}
+
+func markersFromID(size int, id int64) []Coord {
 	markers := make([]Coord, size)
 	for i := 0; i < size; i++ {
 		var c Coord
@@ -85,14 +96,7 @@ func Generate(size int, id int64) Board {
 		markers[i] = c
 	}
 
-	result := Board{
-		Markers: markers,
-		Size:    size,
-	}
-
-	result.updateID()
-
-	return result
+	return markers
 }
 
 func (b *Board) updateID() {
