@@ -102,7 +102,7 @@ func TestGenerate(t *testing.T) {
 		},
 		{
 			3,
-			250,
+			594,
 			fromString(3, `
 			o..
 			o..
@@ -117,6 +117,12 @@ func TestGenerate(t *testing.T) {
 			if d := cmp.Diff(tc.want, got, boardCmpOpt); d != "" {
 				t.Errorf("Want:\n%v\nGot:\n%v", tc.want, got)
 				t.Errorf("Diff -want +got:\n%s", d)
+			}
+		})
+		t.Run(fmt.Sprintf("ID%d", tc.input), func(t *testing.T) {
+			tc.want.updateID()
+			if tc.want.ID != tc.input {
+				t.Errorf("After updateID, ID is %d; want %d", tc.want.ID, tc.input)
 			}
 		})
 	}
@@ -155,6 +161,25 @@ func TestUnusualDistance(t *testing.T) {
 			}
 		}
 		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		eiei := err.(*quick.CheckError)
+		n := eiei.In[0].(uint64)
+		b := getBoard(n)
+		t.Errorf("%v:\n%s", err, b)
+	}
+}
+
+func TestIDIdempotency(t *testing.T) {
+	getBoard := func(nn uint64) Board {
+		n := int64(nn % 9000)
+		return Generate(3, n)
+	}
+	f := func(nn uint64) bool {
+		board := getBoard(nn)
+		board2 := Generate(3, board.ID)
+		board2.updateID()
+		return board2.ID == board.ID
 	}
 	if err := quick.Check(f, nil); err != nil {
 		eiei := err.(*quick.CheckError)

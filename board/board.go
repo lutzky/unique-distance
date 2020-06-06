@@ -96,6 +96,16 @@ func Generate(size int, id int64) Board {
 	}
 }
 
+func (b *Board) updateID() {
+	b.ID = 0
+	for i := len(b.Markers) - 1; i >= 0; i-- {
+		b.ID *= int64(b.Size)
+		b.ID += int64(b.Markers[i].Y)
+		b.ID *= int64(b.Size)
+		b.ID += int64(b.Markers[i].X)
+	}
+}
+
 // SquareDistances returns the squares of all the pairwise distances between markers on b
 func (b *Board) SquareDistances() []int {
 	if len(b.Markers) == 0 {
