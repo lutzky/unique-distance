@@ -101,6 +101,6 @@ func TestUnusualDistance(t *testing.T) {
 		eiei := err.(*quick.CheckError)
 		n := eiei.In[0].(uint64)
 		b := getBoard(n)
-		t.Errorf("%v:\n%s", err, b.String())
+		t.Errorf("%v:\n%s", err, b)
 	}
 }

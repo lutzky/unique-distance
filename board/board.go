@@ -22,12 +22,16 @@ type Coord struct {
 	X, Y int
 }
 
+func (c Coord) String() string {
+	return fmt.Sprintf("(%d,%d)", c.X, c.Y)
+}
+
 // MaxDistance is the maximal possible distance between two markers on b
 func (b *Board) MaxDistance() int {
 	return 2 * (b.Size - 1) * (b.Size - 1)
 }
 
-func (b *Board) String() string {
+func (b Board) String() string {
 	var buf bytes.Buffer
 	b.Print(&buf)
 	return buf.String()
@@ -44,7 +48,7 @@ func (b *Board) Print(w io.Writer) {
 		rows[i] = make([]int, b.Size)
 		for _, c := range b.Markers {
 			if c.Y == i {
-				rows[i][c.X] = 1
+				rows[i][c.X]++
 			}
 		}
 	}
@@ -52,12 +56,18 @@ func (b *Board) Print(w io.Writer) {
 	for i, row := range rows {
 		fmt.Fprintf(w, "[")
 		for _, col := range row {
-			if col == 0 {
+			switch {
+			case col == 0:
 				fmt.Fprintf(w, ".")
-			} else {
+			case col == 1:
 				fmt.Fprintf(w, "o")
+			case col < 16:
+				fmt.Fprintf(w, "%x", col)
+			default:
+				panic("Board with more than 16 markers in same spot: " + fmt.Sprint(b.Markers))
 			}
 		}
+
 		fmt.Fprintf(w, "]")
 		if i == 0 {
 			fmt.Fprintf(w, " %v", b.SquareDistances())
@@ -88,6 +98,9 @@ func Generate(size int, id int64) Board {
 
 // SquareDistances returns the squares of all the pairwise distances between markers on b
 func (b *Board) SquareDistances() []int {
+	if len(b.Markers) == 0 {
+		return nil
+	}
 	result := make([]int, 0, b.Size*(1+b.Size)/2)
 	for i := 0; i < b.Size-1; i++ {
 		for j := i + 1; j < b.Size; j++ {
