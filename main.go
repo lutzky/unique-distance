@@ -77,8 +77,6 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 				if allUnique(ds, b.MaxDistance()) {
 					b.Normalize()
 					ch <- b.ID
-				} else {
-					ch <- -1
 				}
 			}
 			wg.Done()
@@ -91,18 +89,16 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	}()
 
 	for bID := range ch {
-		if bID != -1 {
-			if !found[bID] {
-				if config.printAll {
-					b := board.Generate(config.boardSize, bID)
-					b.Print(w)
-					fmt.Fprintln(w)
-				}
-				found[bID] = true
+		if !found[bID] {
+			if config.printAll {
+				b := board.Generate(config.boardSize, bID)
+				b.Print(w)
+				fmt.Fprintln(w)
+			}
+			found[bID] = true
 
-				if config.quitAfter != 0 && len(found) >= config.quitAfter {
-					return int64(len(found))
-				}
+			if config.quitAfter != 0 && len(found) >= config.quitAfter {
+				return int64(len(found))
 			}
 		}
 	}
