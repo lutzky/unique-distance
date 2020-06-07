@@ -18,9 +18,10 @@ type Board struct {
 	ID      int64
 }
 
-// MaxDistance is the maximal possible distance between two markers on b
-func (b *Board) MaxDistance() int {
-	return 2 * (b.Size - 1) * (b.Size - 1)
+// MaxDistance is the maximal possible distance between two markers on a board
+// of the given size.
+func MaxDistance(size int) int {
+	return 2 * (size - 1) * (size - 1)
 }
 
 func (b Board) String() string {

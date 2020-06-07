@@ -21,7 +21,7 @@ func TestAllUnique(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		got := allUnique(tc.input, 16)
+		got := allUnique(tc.input, make([]bool, 17))
 		if got != tc.want {
 			t.Errorf("allUnique(%v) = %t; want %t", tc.input, got, tc.want)
 		}
@@ -29,8 +29,6 @@ func TestAllUnique(t *testing.T) {
 }
 
 func TestFindUnique(t *testing.T) {
-	skipSlowTests := true
-
 	testCases := []struct {
 		name   string
 		config findUniqueConfig
@@ -43,7 +41,7 @@ func TestFindUnique(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if skipSlowTests && strings.HasPrefix(tc.name, "SLOW") {
+			if testing.Short() && strings.HasPrefix(tc.name, "SLOW") {
 				t.Skip("Skipping slow test")
 			}
 			got := findUnique(nil, tc.config)

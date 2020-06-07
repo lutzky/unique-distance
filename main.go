@@ -43,10 +43,11 @@ func main() {
 
 func findUnique(w io.Writer, config findUniqueConfig) int64 {
 	found := map[int64]bool{}
+	workspace := make([]bool, board.MaxDistance(config.boardSize)+1)
 	for i := int64(0); i < board.Amount(config.boardSize); i++ {
 		b := board.Generate(config.boardSize, i)
 		ds := b.SquareDistances()
-		if allUnique(ds, b.MaxDistance()) {
+		if allUnique(ds, workspace) {
 			b.Normalize()
 			if !found[b.ID] {
 				if config.printAll {
@@ -71,10 +72,11 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	for i := int64(0); i < *workers; i++ {
 		wg.Add(1)
 		go func(i int64) {
+			workspace := make([]bool, board.MaxDistance(config.boardSize)+1)
 			for q := int64(0); q < boardsPerWorker; q++ {
 				b := board.Generate(config.boardSize, boardsPerWorker*i+q)
 				ds := b.SquareDistances()
-				if allUnique(ds, b.MaxDistance()) {
+				if allUnique(ds, workspace) {
 					b.Normalize()
 					ch <- b.ID
 				}
@@ -105,16 +107,18 @@ func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
 	return int64(len(found))
 }
 
-func allUnique(ns []int, max int) bool {
+func allUnique(ns []int, workspace []bool) bool {
 	if len(ns) < 2 {
 		return true
 	}
-	found := make([]bool, max+1)
+	for i := range workspace {
+		workspace[i] = false
+	}
 	for _, d := range ns {
-		if found[d] {
+		if workspace[d] {
 			return false
 		}
-		found[d] = true
+		workspace[d] = true
 	}
 	return true
 }
