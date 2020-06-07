@@ -31,7 +31,8 @@ func (b *Board) Rotate() {
 
 // Normalize brings b to a canonical orientation.
 //
-// If any two boards are equivalent
+// If any two boards can be rotated/mirrored to the same form, normalizing
+// both will turn them into the same board.
 func (b *Board) Normalize() {
 	minID := b.ID
 
