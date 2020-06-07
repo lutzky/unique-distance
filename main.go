@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	workers     = flag.Int64("workers", 4, "Number of workers for parallel version")
+	workers     = flag.Int64("workers", 64, "Number of workers for parallel version")
 	useParallel = flag.Bool("use_parallel", false, "Use parallel implementation")
 )
 
