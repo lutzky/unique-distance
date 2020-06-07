@@ -71,16 +71,15 @@ func (b *Board) Print(w io.Writer) {
 // Generate generates a board of the given size. A given id will always
 // return the same board.
 //
-// Note that the ID of the generated board may not match the provided id.
-// Multiple IDs can generate the same board, which would have had different
-// marker orders, but markers are sorted at generation time.
+// Note that the board's ID may be changed after several operations,
+// which sort the markers. However, generating a new board from the
+// modified ID will result an a board with the same markers.
 func Generate(size int, id int64) Board {
 	result := Board{
 		Markers: markersFromID(size, id),
 		Size:    size,
+		ID:      id,
 	}
-
-	result.updateID()
 
 	return result
 }
@@ -97,17 +96,6 @@ func markersFromID(size int, id int64) []Coord {
 	}
 
 	return markers
-}
-
-func (b *Board) updateID() {
-	b.ID = 0
-	b.sortMarkers()
-	for i := len(b.Markers) - 1; i >= 0; i-- {
-		b.ID *= int64(b.Size)
-		b.ID += int64(b.Markers[i].Y)
-		b.ID *= int64(b.Size)
-		b.ID += int64(b.Markers[i].X)
-	}
 }
 
 func (b *Board) sortMarkers() {

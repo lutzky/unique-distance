@@ -175,6 +175,7 @@ func TestIDIdempotency(t *testing.T) {
 	}
 	f := func(nn uint64) bool {
 		board := getBoard(nn)
+		board.updateID()
 		board2 := Generate(3, board.ID)
 		board2.updateID()
 		return board2.ID == board.ID

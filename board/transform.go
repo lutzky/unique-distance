@@ -34,6 +34,7 @@ func (b *Board) Rotate() {
 // If any two boards can be rotated/mirrored to the same form, normalizing
 // both will turn them into the same board.
 func (b *Board) Normalize() {
+	b.updateID()
 	minID := b.ID
 
 	for i := 0; i < 8; i++ {
@@ -49,4 +50,15 @@ func (b *Board) Normalize() {
 
 	b.Markers = markersFromID(b.Size, minID)
 	b.updateID()
+}
+
+func (b *Board) updateID() {
+	b.ID = 0
+	b.sortMarkers()
+	for i := len(b.Markers) - 1; i >= 0; i-- {
+		b.ID *= int64(b.Size)
+		b.ID += int64(b.Markers[i].Y)
+		b.ID *= int64(b.Size)
+		b.ID += int64(b.Markers[i].X)
+	}
 }
