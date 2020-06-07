@@ -36,9 +36,9 @@ func TestFindUnique(t *testing.T) {
 		config findUniqueConfig
 		want   int64
 	}{
-		{"3x3", findUniqueConfig{boardSize: 3}, 240},
-		{"4x4", findUniqueConfig{boardSize: 4}, 4416},
-		{"SLOW 5x5", findUniqueConfig{boardSize: 5}, 33600},
+		{"3x3", findUniqueConfig{boardSize: 3}, 5},
+		{"4x4", findUniqueConfig{boardSize: 4}, 23},
+		{"SLOW 5x5", findUniqueConfig{boardSize: 5}, 35},
 	}
 
 	for _, tc := range testCases {

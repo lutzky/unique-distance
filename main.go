@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/lutzky/unique-distance/board"
 )
@@ -17,13 +18,13 @@ var (
 type findUniqueConfig struct {
 	boardSize int
 	printAll  bool
-	quitAfter int64
+	quitAfter int
 }
 
 func registerFlags(fs *flag.FlagSet, config *findUniqueConfig) {
 	fs.IntVar(&config.boardSize, "n", 3, "Board size")
 	fs.BoolVar(&config.printAll, "print_all", true, "Print all valid boards seen")
-	fs.Int64Var(&config.quitAfter, "quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
+	fs.IntVar(&config.quitAfter, "quit_after", 0, "Quit after finding this many solutions (0 for 'all')")
 }
 
 func main() {
@@ -41,57 +42,71 @@ func main() {
 }
 
 func findUnique(w io.Writer, config findUniqueConfig) int64 {
-	var found int64
+	found := map[int64]bool{}
 	for i := int64(0); i < board.Amount(config.boardSize); i++ {
 		b := board.Generate(config.boardSize, i)
 		ds := b.SquareDistances()
 		if allUnique(ds, b.MaxDistance()) {
-			if config.printAll {
-				b.Print(w)
-				fmt.Fprintln(w)
+			b.Normalize()
+			if !found[b.ID] {
+				if config.printAll {
+					b.Print(w)
+					fmt.Fprintln(w)
+				}
+				found[b.ID] = true
 			}
-			found++
-			if config.quitAfter != 0 && found >= config.quitAfter {
-				return found
+			if config.quitAfter != 0 && len(found) >= config.quitAfter {
+				return int64(len(found))
 			}
 		}
 	}
-	return found
+	return int64(len(found))
 }
 
 func findUniqueParallel(w io.Writer, config findUniqueConfig) int64 {
-	var found int64
+	found := map[int64]bool{}
+	var wg sync.WaitGroup
 	boardsPerWorker := board.Amount(config.boardSize) / *workers
 	ch := make(chan int64)
 	for i := int64(0); i < *workers; i++ {
+		wg.Add(1)
 		go func(i int64) {
 			for q := int64(0); q < boardsPerWorker; q++ {
 				b := board.Generate(config.boardSize, boardsPerWorker*i+q)
 				ds := b.SquareDistances()
 				if allUnique(ds, b.MaxDistance()) {
+					b.Normalize()
 					ch <- b.ID
 				} else {
 					ch <- -1
 				}
 			}
+			wg.Done()
 		}(i)
 	}
 
-	for i := int64(0); i < board.Amount(config.boardSize); i++ {
-		bID := <-ch
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for bID := range ch {
 		if bID != -1 {
-			if config.printAll {
-				b := board.Generate(config.boardSize, bID)
-				b.Print(w)
-				fmt.Fprintln(w)
-			}
-			found++
-			if config.quitAfter != 0 && found >= config.quitAfter {
-				return found
+			if !found[bID] {
+				if config.printAll {
+					b := board.Generate(config.boardSize, bID)
+					b.Print(w)
+					fmt.Fprintln(w)
+				}
+				found[bID] = true
+
+				if config.quitAfter != 0 && len(found) >= config.quitAfter {
+					return int64(len(found))
+				}
 			}
 		}
 	}
-	return found
+	return int64(len(found))
 }
 
 func allUnique(ns []int, max int) bool {
